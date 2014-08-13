@@ -64,10 +64,52 @@ def GetUpdQueryURL(data):
     i = data.find(findStr)    #Find window.location.replace(
     j = data.find("\");", i)  #Find the ending ");
     return data[i + len(findStr) +1 :j]
+
+
+def ConvertFromTFSDate(d):
+    
+    d=d.replace("/Date(","").replace(")/","")
+    d=float(d)
+    return d
     
 
 
-def PayloadDictionary(rawd):
+def CleanupTFSPayload(payload):
+    retData = []
+
+
+    #Setup our column Dictionary
+    colDict = {}
+    
+    i = 0
+    for column in payload['columns']:
+        colDict[i] = column
+        i = i+1
+
+    
+    #Load Rows
+
+    for row in payload['rows']:
+        retItem = {}
+        for colNum in colDict.keys():
+            colName = colDict[colNum]
+            val = row[colNum]
+            if (
+                (type(val) == type("")) or
+                (type(val) == type(u""))):
+                    if "/Date(" in val:
+                        val = ConvertFromTFSDate(val)
+                
+            retItem[colName] = val
+        retData.append(retItem)
+    
+    return retData
+
+    
+
+
+
+def PayloadDictionary(rawd, columnData="verbose", IncludeTargetIds=False, IncludePayload=True):
     if (not type(rawd) == type({})):
         return {'ERROR': 'TFS Raw Data was not a Dictionary.'}
 
@@ -79,18 +121,27 @@ def PayloadDictionary(rawd):
 
     #Get some basic data about the query
     sortColumns = rawd['sortColumns']
-    pageColumns = rawd['pageColumns']
+
+    SimpleColumnData = rawd['pageColumns']
+    VerboseColumnData = rawd['columns']
+    
     editInfo = rawd['editInfo']
+
+    
     targetIDs = rawd['targetIds']
     wiql = rawd['wiql']
     payload = rawd['payload']
-    columns = rawd['columns']
+    
     queryRan = rawd['queryRan']
 
+
+
     retVal = {}
+    retVal['LOG'] = []
 
     #True/False, did the Query Run?
     retVal['queryRan'] = queryRan
+
 
     #List Sort Order in a simple list of columns
     sortOrder = []
@@ -100,7 +151,18 @@ def PayloadDictionary(rawd):
 
 
     #Return the columns in this query
-    retVal['DataColumns'] = pageColumns
+    
+    if (columnData.upper() == "VERBOSE"):
+        retVal['columns'] = VerboseColumnData
+        retVal['LOG'].append ("Column Data: Verbose")
+    
+    elif (columnData.upper() == "NONE"):
+        #Specifc request to not include columnData
+        retVal['LOG'].append ("Column Data:  None")
+    else:
+        #Put simple column data in for all others
+        retVal['columns'] = SimpleColumnData
+        retVal['LOG'].append ("Column Data: Simple")
 
     #editInfo <-- Skip.  No need to return this to client, as no TFS access is available.
     #Perhaps one day we can expose the query definition this way?
@@ -153,13 +215,21 @@ def PayloadDictionary(rawd):
     ##[System.TeamProject] = 'PROJ1' and [System.WorkItemType] = 'User Story' and
     ##[System.State] <> 'Done' and [System.State] <> 'Removed' order by
     ##[Microsoft.VSTS.Common.Severity]
-    
 
     
+
+    #Straight list of IDs included in the report
+
+    if (IncludeTargetIds):
+        retVal['targetIds'] = targetIDs
+
+
+    if (IncludePayload):
+        retVal['payload'] = CleanupTFSPayload(payload)
     
     return retVal
 
-def ExecuteQuery(query, useLive = False):
+def ExecuteQuery(query, useLive = False, includePayload = True, includeColumnData="simple", includeTargetIds = False):
 
     if (query is None):
         return None
@@ -204,9 +274,11 @@ def ExecuteQuery(query, useLive = False):
     queryName = query['name']
     req3['CACHENAME'] = req3['CACHENAME'].format(queryName)
     
-
+    
     
     
     req3_data = modWebRequests.GetRequest(req3, forceReload=useLive, s=tfs_session)
-    return modWebRequests.JSON2Dict(req3_data)
+    rawDict = modWebRequests.JSON2Dict(req3_data)
+    
+    return PayloadDictionary(rawDict, columnData=includeColumnData, IncludeTargetIds=includeTargetIds, IncludePayload=includePayload)
     
