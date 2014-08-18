@@ -5,6 +5,7 @@ from WebRequests import WebRequests
 import json
 import os
 from modWeb import GetFullDataPath
+import urlparse
 
 
 #Get a value from a dictionary.
@@ -160,4 +161,12 @@ def do(requestName, s=None):
             
         
 
+
+def JSRedirectURL(URLRoot, data):
+    findStr = "window.location.replace("
+    i = data.find(findStr)   #Find window.location.replace(
+    j = data.find("\");", i) #Find the ending ");
+    subUrl = data[i + len(findStr) + 1: j]
+    return urlparse.urljoin(URLRoot, subUrl)
+    
 

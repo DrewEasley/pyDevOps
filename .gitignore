@@ -2,7 +2,7 @@
 secrets.py
 data/*
 *.pyc
-
+pyDevOps_wwwroot/*
 
 # Windows image file caches
 Thumbs.db

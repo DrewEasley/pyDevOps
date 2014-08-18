@@ -32,10 +32,17 @@ WebRequests['Salesforce_Report'] = {
 
 
 #We need to make an initial connection to TFS to get some necessary information
+WebRequests['TFS2010_TEMPLATE'] = {
+    'TFSHOME' : Credentials['TFS']['root'],
+    'TFSPROJ' : Credentials['TFS']['proj'],
+    'Auth': HttpNtlmAuth(Credentials['TFS']['u'], Credentials['TFS']['p']),
+    'Method': 'GET' 
+    }
+
+
 WebRequests['TFS_QUERYROOT'] = {
-    'URL': "{0}{1}{2}",
+    'URL': Credentials['TFS']['root'] + "{1}{2}",
     'PROJ': Credentials['TFS']['proj'],
-    'ROOT': Credentials['TFS']['root'],
     'Method': 'GET',
     'PREVENTCACHING': True,
     'Auth': HttpNtlmAuth(Credentials['TFS']['u'], Credentials['TFS']['p'])
@@ -57,7 +64,7 @@ WebRequests['TFS_QUERIES'] = {
 
 WebRequests['TFS_QUERY'] = {
     'CACHENAME': 'TFS_QUERY_{0}.tfsdat',
-    'URL': "{0}{1}{2}" ,
+    'URL': Credentials['TFS']['root'] +"{1}{2}" ,
     'Method': 'POST',
     'Headers': {
         'content-type': 'application/x-www-form-urlencoded'
