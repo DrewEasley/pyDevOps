@@ -14,6 +14,8 @@ globalConfig = {}
 globalConfig['TEST_DESIGNATOR'] = "_test"
 
 
+globalConfig['SECURITYKEY'] = 'asve@#GKLND><BJ%#@Q:OIJR' #Change this to something else equally unique
+
 #Config settings specific to modWeb only
 modWebConfig = {}
 modWebConfig['CGIDEBUG_TEST'] = True
