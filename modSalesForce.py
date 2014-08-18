@@ -4,38 +4,39 @@ import modWebRequests
 import modCSV
 import os
 from modWeb import GetFullDataPath
+import modDataCache
+import copy
 
 
+def GetObject(r, forceReload = False, forceCache=False, webSession = None, withSave=True):
+    MyName = "SALESFORCE"
+    r_ForCache = copy.deepcopy(r)
 
-
-#x = GetReportLive("00O30000008Rd2B")
-def GetReportLive(ReportID):
-    SfReportRequest = WebRequests['Salesforce_Report']
-    SfReportRequest
-    SfReportRequest['URL'] = SfReportRequest['URL'].format(ReportID)
-    SfReportRequest['CACHENAME'] = SfReportRequest['CACHENAME'].format(ReportID)
-    webQueue = ['Salesforce_Login', SfReportRequest]
-
-    data = modWebRequests.do(webQueue)
+    r_ForCache = r_ForCache[:1]
     
-    pyData = modCSV.ReadCSVStream(data)
-    modCSV.WriteCSV(pyData, os.path.join("data", ReportID + ".csv"))
-    return pyData
-
-
-
-#x = GetReportCached("00O30000008Rd2B")
-def GetReportCached(ReportID):
-    dataFile = GetFullDataPath(ReportID + ".csv")
-    #dataFile = os.path.join("data", ReportID + ".csv")
-    if (os.path.exists(dataFile)):
-        pyData = modCSV.ReadFile(dataFile)
+    if (not forceReload):
+        res = modDataCache.LoadFromCache(MyName,r_ForCache)
+        
     else:
-        #Cached copy doesn't exist, we need to fetch it live.
-        pyData = GetReportLive(ReportID)
+        #Force the reload, set Result to None
+        res = None
+
+    if ((res is None) and not forceCache):
+        
+        #Object was not in Cache, we need to load remotely (and we are allowed to)
+        res = modWebRequests.do(r, s=webSession)
+        if (withSave):
+            modDataCache.SaveToCache(MyName, r_ForCache, res)
+
+    return res
+
+def GetReport(ReportID, UseLive = False):
+    SfReportRequest = WebRequests['Salesforce_Report']
+    SfReportRequest['URL'] = SfReportRequest['URL'].format(ReportID)
+    webQueue = ['Salesforce_Login', SfReportRequest]
+    data = GetObject(webQueue, forceReload= UseLive)
+    pyData = modCSV.ReadCSVStream(data)
     return pyData
 
 
 
-
-#print x
