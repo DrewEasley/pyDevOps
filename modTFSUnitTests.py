@@ -113,10 +113,10 @@ class TestmodTFS(unittest.TestCase):
         rDatb = str(random.randint(100,255))
 
         
-        qry_list = modTFS.PrepareTFSRequest('QUERY_LIST', rData, TFS_TEMPLATE_NAME, cacheName = 'UnitTest' + rDatb)
+        qry_list = modTFS.PrepareTFSRequest('QUERY_LIST', rData, TFS_TEMPLATE_NAME)
         
 
-        self.assertEquals(qry_list['CACHEAS'] , 'UnitTest' + rDatb)
+        
         desiredURL = '/_api/_wit/queries'
 
         #URL should end with /_api/_wit/queries
@@ -125,11 +125,11 @@ class TestmodTFS(unittest.TestCase):
 
         rDatc = str(random.randint(100,255))
         rDatd = str(random.randint(100,255))
-        aft_data = modTFS.PrepareTFSRequest('AFT_ROOT', rDatc, TFS_TEMPLATE_NAME, cacheName = 'UnitTest' + rDatd)
+        aft_data = modTFS.PrepareTFSRequest('AFT_ROOT', rDatc, TFS_TEMPLATE_NAME)
         desiredURL = '_workItems/resultsById/' + rDatc
-        cacheAs = 'UnitTest' + rDatd
+        
         self.assertTrue(aft_data['URL'].endswith(desiredURL))
-        self.assertEquals(aft_data['CACHEAS'], cacheAs)
+        
 
         
 
@@ -175,10 +175,19 @@ class TestmodTFS(unittest.TestCase):
         
 
     def test_GetAFT(self):
-        sampleResponse = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-       <html xmlns="http://www.w3.org/1999/xhtml"><head><title>Microsoft Team Foundation Server</title><meta http-equiv="X-UA-Compatible" content="IE=10;&#32;IE=9;&#32;IE=8" />
-        </head><body class=" "><input name="__RequestVerificationToken" type="hidden" value="xxxxxxxxxxxxxxxxxxxxx-pjKkIdyxxxXXXXXXXXXXXXXXXhspFBp1yt5cxBnKrfFduLn-VW4Cdxlc5kNB9ytP_25QntpiG5jZBJp45GzmyCa70h37Jlyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" /><input name="__RequestVerificationToken2" type="hidden" value="__RequestVerificationToken2710344ec-32be-42f9-8fb7-xxxxxxxxxxxx" />
-    <!-- Shortened data for Unit Testing --><div class="main-container"></div></body></html>"""
+        sampleResponse = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+
+       <html xmlns="http://www.w3.org/1999/xhtml"><head><title>Microsoft Team Foundation Server
+</title><meta http-equiv="X-UA-Compatible" content="IE=10;&#32;IE=9;&#32;IE=8" />
+
+        </head>
+<body class=" ">
+<input name="__RequestVerificationToken" type="hidden" value="xxxxxxxxxxxxxxxxxxxxx-pjKkIdyxxxXXXXXXXXXXXXXXXhspFBp1yt5cxBnKrfFduLn-VW4Cdxlc5kNB9ytP_25QntpiG5jZBJp45GzmyCa70h37Jlyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" /><input name="__RequestVerificationToken2" type="hidden" value="__RequestVerificationToken2710344ec-32be-42f9-8fb7-xxxxxxxxxxxx" />
+
+    <!-- Shortened data for Unit Testing -->
+<div class="main-container"></div></body>
+</html>"""
         AFT_TOKEN = modTFS.GetAFT(sampleResponse)
         happyToken = ((len(AFT_TOKEN) > 100) and (len(AFT_TOKEN) < 300))
         self.assertTrue(happyToken) #Token is between 101 and 299 characters. Testing, it may hold steady at 156, but we can be flexible here

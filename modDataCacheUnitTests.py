@@ -56,8 +56,8 @@ class TestmodDataCache(unittest.TestCase):
 
 
     def test_CacheObject3(self):
-        modDataCache.SaveToCache("UnitTest", self.TESTOBJECT3)
-        res = modDataCache.LoadFromCache("UnitTest", self.TESTOBJECT3)
+        modDataCache.SaveToCache("UnitTest", self.TESTOBJECT2, self.TESTOBJECT3)
+        res = modDataCache.LoadFromCache("UnitTest", self.TESTOBJECT2)
         self.assertEquals(self.TESTOBJECT3, res)
 
     def test_CacheObjectNotFound(self):

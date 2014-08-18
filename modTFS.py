@@ -7,12 +7,11 @@ from WebRequests import WebRequests
 import xml.etree.ElementTree as etree
 import modReporting
 from urlparse import urljoin
+import modDataCache
+
+import copy
 
 
-
-
-        
-    
 
 
 
@@ -23,7 +22,6 @@ TFS_API_ENDPOINTS = {
         'QUERY_LIST': '_api/_wit/queries',
         'QUERY_FETCH': '_api/_wit/query?__v=1'
     }
-
 
 #Unit Tested by : test_loadTFSTemplate
 def LoadTFSTemplate(templateName):
@@ -36,16 +34,12 @@ def getTFSRoot(templateName = 'TFS2010_TEMPLATE'):
     return t['TFSHOME']
 
 #Unit Tested by : test_PreprareTFSRequest
-def PrepareTFSRequest(endpoint, param, templateName = 'TFS2010_TEMPLATE', cacheName = None, requirePost = False):
-    t = LoadTFSTemplate(templateName)
-    
+def PrepareTFSRequest(endpoint, param, templateName = 'TFS2010_TEMPLATE', requirePost = False):
+    t = copy.deepcopy(LoadTFSTemplate(templateName))
     tfshome = getTFSRoot(templateName)
     tfsproj = t['TFSPROJ']
 
-    
     projurl = urljoin(tfshome, tfsproj)
-
-    
     
     endpoint = TFS_API_ENDPOINTS[endpoint]
     endpoint = endpoint.format(param)
@@ -53,16 +47,13 @@ def PrepareTFSRequest(endpoint, param, templateName = 'TFS2010_TEMPLATE', cacheN
     url = urljoin(projurl, endpoint)
     t['URL'] = url
 
-    if (cacheName is not None):
-        t['CACHEAS'] = cacheName
+
+
+    
 
     if (requirePost):
         t['Method'] = 'POST'
     
-    #Remove extra data we don't need right now
-    
-    #t.pop('PROJ')
-    #t.pop('HOME')
     
     return t
 
@@ -74,11 +65,51 @@ def AddRequestAttribute(t, attName, attValue):
     t['Attributes'][attName] = attValue
     return (t)
 
+
+def GetObject(r, forceReload = False, forceCache=False, webSession = None, withSave=True):
+    MyName = "TFS"
+
+    
+
+    r_ForCache = copy.deepcopy(r)
+
+    #We cannot cache objects with Auth flags. Specifically NTLM Auth flags which change frequently
+    #If a user changed their password, it would force a cache refresh
+    if ('Auth' in r_ForCache.keys()):
+        r_ForCache.pop('Auth')
+    
+    
+    if (not forceReload):
+        res = modDataCache.LoadFromCache(MyName,r_ForCache)
+        
+        
+    else:
+        #Force the reload, set Result to None
+        res = None
+
+    
+    if ((res is None) and not forceCache):
+        
+        #Object was not in Cache, we need to load remotely (and we are allowed to)
+        res = modWebRequests.GetRequest(r, s=webSession)
+        if (withSave):
+            modDataCache.SaveToCache(MyName, r_ForCache, res)
+
+    return res
+
+    
+    
+
+
 #Unit Tested by : test_GetQueries
 def GetQueries(templateName='TFS2010_TEMPLATE', forceReload = False):
-    t = PrepareTFSRequest('QUERY_LIST', None, templateName, cacheName = 'TFSQueryList')
+
+    #We need to prepare the request for cache and forced reloads, because it is the
+    #request definition that determines what the cached object name is
+    t = PrepareTFSRequest('QUERY_LIST', None, templateName)
     t = AddRequestAttribute(t, 'includeQueryTexts', 'true') #Request Query Text
-    qData = modWebRequests.GetRequest(t, forceReload)
+    qData = GetObject(t, forceReload, withSave = True)
+    
     return (json.load(StringIO(qData)))
 
 
@@ -287,7 +318,7 @@ def PayloadDictionary(rawd, columnData="verbose", IncludeTargetIds=False, Includ
     #editInfo <-- Skip.  No need to return this to client, as no TFS access is available.
     #Perhaps one day we can expose the query definition this way?
     #Example editInfo returned...
-    #print json.dumps(retVal['REPORT']['editInfo'], indent=2)
+    #rint json.dumps(retVal['REPORT']['editInfo'], indent=2)
     ##{
     ##  "sourceFilter": {
     ##    "clauses": [
@@ -327,7 +358,7 @@ def PayloadDictionary(rawd, columnData="verbose", IncludeTargetIds=False, Includ
     ##}
 
     #wiql <--  Skip this as well, no need to return it
-    #print retVal['REPORT']['wiql']
+    #rint retVal['REPORT']['wiql']
     ##select [System.Id], [System.State], [Microsoft.VSTS.Common.Severity],
     ##[System.Title], [System.IterationPath], [System.AssignedTo],
     ##[System.ChangedBy], [System.ChangedDate], [Microsoft.VSTS.Common.StackRank],
@@ -355,22 +386,27 @@ def PayloadDictionary(rawd, columnData="verbose", IncludeTargetIds=False, Includ
 def ExecuteQuery_Step1(qry_id, tfsSession, useLive = False):
     #Step 1: Get the correct path to the Query (what the user would see in TFS)
     Request1 = PrepareTFSRequest('AFT_ROOT', qry_id)
-    Request1['PREVENTCACHING'] = True
     TFS_ROOT = Request1['TFSHOME']
-    req1_data = modWebRequests.GetRequest(Request1, forceReload=useLive, s=tfsSession)
+    req1_data = GetObject(Request1, forceReload=useLive, withSave = False, webSession = tfsSession)
+    
+
+    
+    
 
     #Our response contains a window.location.replace(URL) command in javascript
     #this modWebRequests function will figure out what URL we need to go to
 
     
     req1_newUrl = modWebRequests.JSRedirectURL(TFS_ROOT, req1_data)
+
     return req1_newUrl
 
 
 def ExecuteQuery_Step2(url, tfsSession, useLive = False):
     Request2 = PrepareTFSRequest('AFT_ROOT', None) #It does not matter what endpoint you use, we rewrite the URL below
     Request2['URL'] = url
-    req2_data = modWebRequests.GetRequest(Request2, forceReload=useLive, s=tfsSession)
+
+    req2_data = GetObject(Request2, useLive, withSave = False, webSession = tfsSession)
     AFToken = GetAFT(req2_data)
     return AFToken
     
@@ -378,49 +414,63 @@ def ExecuteQuery_Step2(url, tfsSession, useLive = False):
 
 def ExecuteQuery(query, useLive = False, includePayload = True, includeColumnData="verbose", includeTargetIds = False):
 
-    
+    #We cannot execute a query that does not exist    
     if (query is None):
         return None
 
-    query_template = []
+    #query_template = []
     qry_id = QueryID(query)
     qry_wiql = QueryMethod(query)
+    queryName = query['name']
+
+    TFSRequest = PrepareTFSRequest('QUERY_FETCH', None, requirePost = True)
+    
+    TFSRequest = AddRequestAttribute(TFSRequest, 'wiql', QueryMethod(query))
+    TFSRequest = AddRequestAttribute(TFSRequest, 'runQuery', True)
+    TFSForCache = copy.deepcopy(TFSRequest)
+    TFSForCache.pop('Auth')
+    
+    if (not useLive):
+        #User is okay with cached / stale data. Can we take a shortcut and find it in the cache
+        
+        res = GetObject(TFSRequest, forceReload = False, forceCache = True, withSave=False)
+        
+
+    if ((res is None) or (useLive)):
+        
+        #No cached copy found, we need to go live with this baby!
+        tfs_session = modWebRequests.GenerateSession()  #Use a recurring session ID
+        
+        
+        #The user has passed us a query to execute.  TFS will use Javascript to redirect us to the actual
+        #landing page.  Let's get that redirect URL ourselves since python requests cannot follow javascript redirects (yet?)
+
+        
+        js_returnURL = ExecuteQuery_Step1(qry_id, tfs_session, useLive = True)
+        
+        
+       
+        #Step 2, make a request to the new URL, and get the __AntiForgeryToken from the TFS Results
+        AFToken = ExecuteQuery_Step2(js_returnURL, tfs_session, useLive = True)
+        
+        #Step 3, execute the request for JSON data, passing the AFT as __RequestVerificationToken
+        
+        #We didn't know this before, because we don't cache AFTokens.
+        #Add it now
+        
+        
+        
+        
+        TFSRequest = AddRequestAttribute(TFSRequest, '__RequestVerificationToken', AFToken)
+        TFSRequest['Headers'] = {'content-type': 'application/x-www-form-urlencoded'}
+        
+        req3_data = modWebRequests.GetRequest(TFSRequest, s=tfs_session)
+        rawDict = modWebRequests.JSON2Dict(req3_data)
+        res = PayloadDictionary(rawDict, columnData=includeColumnData, IncludeTargetIds=includeTargetIds, IncludePayload=includePayload)
 
 
-
-    #We need to make two requests, we need to make them under the same web session.
-    tfs_session = modWebRequests.GenerateSession()
-    
-    #The user has passed us a query to execute.  TFS will use Javascript to redirect us to the actual
-    #landing page.  Let's get that redirect URL ourselves since python requests cannot follow javascript redirects (yet?)
-    js_returnURL = ExecuteQuery_Step1(qry_id, tfs_session, useLive)
-    
-    #Step 2, make a request to the new URL, and get the __AntiForgeryToken from the TFS Results
-    AFToken = ExecuteQuery_Step2(js_returnURL, tfs_session, useLive)
-    
-
-
-    #Step 3, execute the request for JSON data, passing the AFT as __RequestVerificationToken
-    queryName = query['name']   
-    Request3CacheName = "TFS_QUERY_{0}.tfsdat".format(queryName)
-    Request3 = PrepareTFSRequest('QUERY_FETCH', None, requirePost = True, cacheName = Request3CacheName)
-    #req3['URL'] = req3['URL'].format(TFS_PROJ, '')
-    Request3['Headers'] = {'content-type': 'application/x-www-form-urlencoded'}
-
-    if ('Attributes' not in Request3.keys()):
-        Request3['Attributes'] = {}
-    
-    Request3['Attributes']['wiql'] = QueryMethod(query)
-    Request3['Attributes']['runQuery'] = True
-    Request3['Attributes']['__RequestVerificationToken'] = AFToken
- 
-    
-    
-    
-    req3_data = modWebRequests.GetRequest(Request3, forceReload=useLive, s=tfs_session)
-
-    rawDict = modWebRequests.JSON2Dict(req3_data)
-    
-    return PayloadDictionary(rawDict, columnData=includeColumnData, IncludeTargetIds=includeTargetIds, IncludePayload=includePayload)
+        modDataCache.SaveToCache("TFS", TFSForCache, res)
+        
+    return (res)
     
 

@@ -12,9 +12,8 @@
 globalConfig = {}
 
 globalConfig['TEST_DESIGNATOR'] = "_test"
-
-
 globalConfig['SECURITYKEY'] = 'asve@#GKLND><BJ%#@Q:OIJR' #Change this to something else equally unique
+globalConfig['VERBOSITY'] = False #Set this to true for debugging, but it will break HTML output
 
 #Config settings specific to modWeb only
 modWebConfig = {}

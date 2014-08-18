@@ -20,75 +20,14 @@ def JSON2Dict(webResponse):
     return json.loads(webResponse)
 
 
-def CacheObjectName(d):
 
-    
-    retVal = "GenericObject"
-    #For string objects, return the string name + .webdat
-    if (type(d) == type("")):
-        retVal = d + ".webdat"
-
-    elif (type(d) == type({})):
-        if "CACHENAME" in d.keys():
-            retVal = d['CACHENAME'] + ".dynwebdat"
-        else:
-            retVal = os.path.split(d['URL'])[-1] + ".dynwebdat"
-            
-    
-    
-
-    #Just in case, let's remove any path splitters
-    #This may cause trouble in the future,
-    #TODO: find a better path sanitization routine
-
-    
-        
-        
-    
-    retVal = GetFullDataPath(os.path.split(retVal)[-1])
-    return retVal
+#def CacheObjectName(d):
+#CacheObjectName is removed, and replaced by the entire modDataCache library
 
     
 
-def GetRequest(requestName, forceReload = False, s=None):
-    #Set a flag to see if we will use the cache to return this data
-    #Default value is to use the Cache
-    UseCache = (not forceReload)
-
-    #Also set a flag to see if the results can ever be cached
-    PreventCaching = False #Some types cannot be cached
-
-    if (type(requestName) == type({})):
-        if "PREVENTCACHING" in requestName.keys():
-            PreventCaching = requestName['PREVENTCACHING']
-
-    
-    #Can we use the Cache?
-    if (UseCache):
-        dataFile = str(CacheObjectName(requestName))
-        #Get cached data if it exists
-        if (os.path.exists(dataFile)):
-            dfi = open(dataFile, 'r')
-            retData = dfi.read()
-            dfi.close()
-            
-
-        #Cached object doesn't exist, get it live:
-        else:
-            UseCache = False
-            
-
-    #We were told not to use the cache, Cache was empty, or something went wrong with the cache
-    if (not UseCache): #Not Use Cache
-        retData = do(requestName, s).content
-
-        #Save our result for later
-        if (PreventCaching == False):
-            #Cache the data that comes back
-            dfi = open(dataFile, 'wb')
-            dfi.write(retData)
-            dfi.close()
-
+def GetRequest(requestName, s=None):
+    retData = do(requestName, s).content
     return retData
 
 
