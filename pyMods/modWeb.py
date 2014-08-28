@@ -76,10 +76,10 @@ def defaultJSONSet():
     return retVal
 
 def beginJSON():
-    print("Content-type: application/json\r\n")
     return defaultJSONSet()  #Return a new dictionary
 
 def endJSON(d, prettyPrint=3):
+    print("Content-type: application/json\r\n")
     print(json.dumps(d, indent=prettyPrint, default=dthandler))
 
 def CGIDebug():
