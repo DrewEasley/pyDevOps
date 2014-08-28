@@ -9,14 +9,16 @@ import modCSV
 
 
 
-def GetReport(ReportID, UseLive = False):
+def GetReport(ReportID, IDColumn, UseLive = False):
     SfReportRequest = WebRequests['Salesforce_Report']
     SfReportRequest['URL'] = SfReportRequest['URL'].format(ReportID)
     webQueue = ['Salesforce_Login', SfReportRequest]
     #data = GetObject(webQueue, forceReload= UseLive)
     data = modWebRequests.do(webQueue)
     pyData = modCSV.ReadCSVStream(data)
-    return deepDataDictionary.newFromPydict("SalesForce", ReportID, pyData)
+    ds = deepDataDictionary.newFromPydict("SalesForce", ReportID, pyData)
+    ds.setIDColumn(IDColumn)
+    return ds
     #return pyData
 
 

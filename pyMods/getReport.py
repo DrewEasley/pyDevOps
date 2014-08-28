@@ -44,7 +44,7 @@ else:
 
     #Sales Force Report (All Open or Dev Escalation)
     ReportSource = 'SALESFORCE'
-    ReportID = '00O300000000000' 
+    ReportID = '00O3000000' 
     # SummaryCol1 = 'Case Owner'
     # SummaryCol2 = 'Status'
 
@@ -77,7 +77,7 @@ if (ReportSource.upper() == 'SALESFORCE'):
         reportData = {'ERROR' : 'ReportID parameter was not specified'}
         
     #elif (RequireLive):
-    sfDataSource = modSalesForce.GetReport(ReportID, UseLive=RequireLive)
+    sfDataSource = modSalesForce.GetReport(ReportID, 'Case Number', UseLive=RequireLive)
     reportData = sfDataSource.asDict()
     
 
