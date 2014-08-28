@@ -16,9 +16,10 @@ def GetReport(ReportID, UseLive = False):
     #data = GetObject(webQueue, forceReload= UseLive)
     data = modWebRequests.do(webQueue)
     pyData = modCSV.ReadCSVStream(data)
-    return pyData
+    return deepDataDictionary.newFromPydict("SalesForce", ReportID, pyData)
+    #return pyData
 
 
-REPORT_ID = "00O30000008Rd2B"
+#REPORT_ID = "00O30000008Rd2B"
 
-dx = deepDataDictionary.newFromPydict("SalesForce", REPORT_ID, GetReport(REPORT_ID))
+#dx = deepDataDictionary.newFromPydict("SalesForce", REPORT_ID, GetReport(REPORT_ID))
