@@ -49,8 +49,8 @@ class DataSource:
             retVal.append(self.myColumns[x]['name'])
         return retVal
 
-    def setIDColumn(name):
-        for i in myColumns:
+    def setIDColumn(self, name):
+        for i in self.myColumns:
             if name.upper() == self.myColumns[i]['name'].upper():
                 self.idColumn = i
         
@@ -94,7 +94,7 @@ class DataSource:
     def setMyRequest(self, d, sou):
         self.myRequest = d
         self.mySource = sou
-        print self.myRequest
+        #print self.myRequest
         return self
 
     def myName(self):
@@ -150,7 +150,7 @@ def newFromPydict (mySource, RequestData, dictionarydata, RecordWithAllColumns =
         for c in d.myColumnNames():
             rValue = r[c]
             MyRecord.append(rValue)
-        print MyRecord
+        #print MyRecord
         d.addData([MyRecord])
     return d
 
