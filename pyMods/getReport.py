@@ -9,7 +9,9 @@ import os
 import modWebRequests
 #import modTFS
 import urllib
+import cgi, cgitb
 
+cgitb.enable()
 
 retVal = modWeb.beginJSON()
 
