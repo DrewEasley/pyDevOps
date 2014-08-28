@@ -80,6 +80,7 @@ def beginJSON():
 
 def endJSON(d, prettyPrint=3):
     print("Content-type: application/json\r\n")
+    print ("\r\n")
     print(json.dumps(d, indent=prettyPrint, default=dthandler))
 
 def CGIDebug():
