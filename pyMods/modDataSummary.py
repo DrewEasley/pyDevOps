@@ -7,6 +7,7 @@ def Summarize(ds1, col1):
     
     retVal = {}
     #First we need to sort the list
+    ds1 = ds1['REPORT']
     newList = sorted(ds1, key=lambda k: k[col1])
 
     gb = groupby(newList, lambda item: item[col1])
@@ -24,6 +25,7 @@ def Summarize(ds1, col1):
 def Summarize2D(ds1, col1, col2, col1List=None, col2List = None):
 
     retVal = {}
+    ds1 = ds1['REPORT']
 
     #
     #for key in col1List:
