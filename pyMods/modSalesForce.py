@@ -43,9 +43,3 @@ def GetReport(ReportID, IDColumn):
     #return pyData
 
 
-#REPORT_ID = "00O30000008Rd2B"
-
-#dx = deepDataDictionary.newFromPydict("SalesForce", REPORT_ID, GetReport(REPORT_ID))
-
-
-GetCachedReport('00O30000008Rd2B', 'Case Number')
