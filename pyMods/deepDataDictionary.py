@@ -73,7 +73,8 @@ class DataSource:
                 cValue = r[c]
                 retItem[cName] = cValue
             if ('id' not in retD):
-                retItem['id'] = r[self.idColumn]
+                if len(r) > 0:
+                    retItem['id'] = r[self.idColumn]
             retD.append(retItem)
         return retD
     
