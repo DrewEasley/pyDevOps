@@ -7,12 +7,21 @@ import modDataCache
 import json
 import cPickle as ca
 import modDataSummary
+import datetime
+import os
+
+
 
 
 
 
 def loadPickle(cacheObjectName):
-    d = ca.load(open(cacheObjectName, 'rb'))
+    if (os.path.exists(cacheObjectName)):
+        d = ca.load(open(cacheObjectName, 'rb'))
+        d.cacheAge = (datetime.datetime.now() - d.cacheTime)
+        return d
+    else:
+        return None
 
 
 class DataSource:
@@ -20,7 +29,8 @@ class DataSource:
     myRequest = {}
     myColumns = {}
     myMetaData = {}
-    
+    cacheTime = None
+    cacheAge = None
     myRows = []
 
     mySource = ""
@@ -28,6 +38,10 @@ class DataSource:
     useMod = None
     useCache = False
     idColumn = 0
+
+    def isStale(self, seconds = 0, minutes = 0, hours = 0, days = 0):
+        dd = datetime.timedelta(days = days, hours = hours, minutes = minutes, seconds = seconds)
+        return (dd  < self.cacheAge)
 
     def Summarize1(self, columnName):
         d = self.asDict()
@@ -38,7 +52,8 @@ class DataSource:
         return modDataSummary.Summarize2D(d, column1Name, column2Name)
 
     def savePickle(self, cacheObjectName):
-        ca.dump(self, open(fName, 'wb'))
+        self.cacheTime = datetime.datetime.now()
+        ca.dump(self, open(cacheObjectName, 'wb'))
 
     def numRows(self):
         return len(self.myRows)

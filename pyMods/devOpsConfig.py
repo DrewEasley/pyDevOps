@@ -21,4 +21,7 @@ modWebConfig['CGIDEBUG_TEST'] = True
 modWebConfig['CGIDEBUG_PROD'] = False #Not yet supported, nice to have
 
 
+#When should the Salesforce Cache Expire? 
+modSFConfig = {}
+modSFConfig['CACHE_EXPIRE_MINUTES'] = 30
 
