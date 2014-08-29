@@ -93,7 +93,11 @@ class DataSource:
                 if len(r) > 0:
                     retItem['id'] = r[self.idColumn]
             retD.append(retItem)
-        return retD
+        retD2 = {}
+        retD2['REPORT'] = retD
+        retD2['MetaData'] = self.myMetaData
+        
+        return retD2
     
     def addColumn(self, name, label=None, width=None, sorttype=None, summaryType = None, sortable=True, groupable = False):
         idx = len(self.myColumns)
@@ -142,11 +146,9 @@ class DataSource:
     #        #rint r
 
     def outAsJSON(self, PrettyPrint=2):
-        retD = {}
-        retD['REPORT'] = self.asDict()
-        retD['META'] = self.myMetaData
- 
-        return json.dumps(retD, indent=PrettyPrint)
+        
+        
+        return json.dumps(self.asDict(), indent=PrettyPrint)
         
         
         

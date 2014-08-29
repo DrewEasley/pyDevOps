@@ -38,7 +38,7 @@ def GetReport(ReportID, IDColumn):
     pyData = modCSV.ReadCSVStream(data)
     ds = deepDataDictionary.newFromPydict("SalesForce", ReportID, pyData)
     #ds.setIDColumn(IDColumn)
-    deepDataDictionary.savePickle(getPiclName(ReportID), ds)
+    #deepDataDictionary.savePickle(getPiclName(ReportID), ds)
     return ds
     #return pyData
 
