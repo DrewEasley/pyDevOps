@@ -23,6 +23,9 @@ def loadPickle(cacheObjectName):
     else:
         return None
 
+def savePickle(cacheObjectName, obj):
+    obj.cacheTime = datetime.datetime.now()
+    ca.dump(obj, open(cacheObjectName, 'wb'))
 
 class DataSource:
 
@@ -51,9 +54,6 @@ class DataSource:
         d = self.asDict()
         return modDataSummary.Summarize2D(d, column1Name, column2Name)
 
-    def savePickle(self, cacheObjectName):
-        self.cacheTime = datetime.datetime.now()
-        ca.dump(self, open(cacheObjectName, 'wb'))
 
     def numRows(self):
         return len(self.myRows)
@@ -81,7 +81,9 @@ class DataSource:
 
     def asDict(self):
         retD = []
+        
         for r in self.myRows:
+            
             retItem = {}
             for c in self.myColumns:
                 cName = self.myColumns[c]['name']
@@ -110,7 +112,7 @@ class DataSource:
     def setMyRequest(self, d, sou):
         self.myRequest = d
         self.mySource = sou
-        #print self.myRequest
+        #rint self.myRequest
         return self
 
     def myName(self):
@@ -133,20 +135,23 @@ class DataSource:
     #        if (len(cHeaders) > 0):
     #            cHeaders = cHeaders + ","
     #        cHeaders = cHeaders + cName
-    #    print cHeaders
+    #    rint cHeaders
     #    for r in self.myRows:
-    #        print str(r)[1:-1]
+    #        rint str(r)[1:-1]
     #    #for r in self.myRows:
-    #        #print r
+    #        #rint r
 
     def outAsJSON(self, PrettyPrint=2):
-        retD = self.asDict()
-            
+        retD = {}
+        retD['REPORT'] = self.asDict()
+        retD['META'] = self.myMetaData
+ 
         return json.dumps(retD, indent=PrettyPrint)
         
         
         
 
+    
 
 def newFromPydict (mySource, RequestData, dictionarydata, RecordWithAllColumns = 0):
     d = DataSource()
@@ -166,7 +171,7 @@ def newFromPydict (mySource, RequestData, dictionarydata, RecordWithAllColumns =
         for c in d.myColumnNames():
             rValue = r[c]
             MyRecord.append(rValue)
-        #print MyRecord
+        #rint MyRecord
         d.addData([MyRecord])
     return d
 

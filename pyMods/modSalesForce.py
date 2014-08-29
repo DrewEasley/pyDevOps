@@ -15,7 +15,8 @@ def getPiclName(ReportID):
 
 def GetCachedReport(ReportID, IDColumn):
     ds = deepDataDictionary.loadPickle(getPiclName(ReportID))
-
+    
+ 
     if (ds is not None):
         if ds.isStale(minutes = 15):
             #Record is Stale. Fetch Live
@@ -36,8 +37,8 @@ def GetReport(ReportID, IDColumn):
     data = modWebRequests.do(webQueue)
     pyData = modCSV.ReadCSVStream(data)
     ds = deepDataDictionary.newFromPydict("SalesForce", ReportID, pyData)
-    ds.setIDColumn(IDColumn)
-    ds.savePickle(getPiclName(ReportID))
+    #ds.setIDColumn(IDColumn)
+    deepDataDictionary.savePickle(getPiclName(ReportID), ds)
     return ds
     #return pyData
 
